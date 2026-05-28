@@ -1,0 +1,35 @@
+services:
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: ${DB_USER:-user}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+      POSTGRES_DB: ${DB_DATABASE:-kepas_cv}
+    volumes:
+      - cv_pg:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER}"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  app:
+    build: .
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      DB_USER: ${DB_USER:-user}
+      DB_PASSWORD: ${DB_PASSWORD:-password}
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_DATABASE: ${DB_DATABASE:-kepas_cv}
+      PORT: 4100
+      BASE_PATH: ${BASE_PATH:-}
+      API_PATH: ${API_PATH:-/api/cv}
+    ports:
+      - "${HOST_PORT:-4100}:4100"
+    command: sh -c "node scripts/migrate.js && node src/index.js"
+
+volumes:
+  cv_pg:

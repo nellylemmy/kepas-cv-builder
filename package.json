@@ -1,0 +1,26 @@
+{
+  "name": "kepas-cv-builder",
+  "version": "1.0.0",
+  "description": "Free CV / resume builder — A4 layout, shareable links, PDF export. MIT.",
+  "type": "module",
+  "main": "src/index.js",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "migrate": "node scripts/migrate.js"
+  },
+  "license": "MIT",
+  "author": "Nelson Lemein <nelsonlemmy61@gmail.com>",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/nellylemmy/kepas-cv-builder.git"
+  },
+  "homepage": "https://kepas.co.ke/tools/cv-builder",
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "nunjucks": "^3.2.4",
+    "pg": "^8.11.5"
+  }
+}

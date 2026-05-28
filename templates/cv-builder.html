@@ -1,0 +1,1474 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>{{ pageTitle or 'CV Builder — KEPAS' }}</title>
+<meta name="description" content="{{ metaDescription or 'Create a professional CV for free. Save online, share via link, and download as PDF.' }}"/>
+<link rel="canonical" href="https://kepas.co.ke{{ canonicalPath or '/tools/cv-builder' }}"/>
+<meta property="og:title" content="{{ pageTitle or 'Free CV Builder — KEPAS' }}"/>
+<meta property="og:description" content="{{ metaDescription or 'Create a professional CV for free.' }}"/>
+<meta property="og:url" content="https://kepas.co.ke/tools/cv-builder"/>
+<meta property="og:type" content="website"/>
+<meta name="twitter:card" content="summary"/>
+<link rel="icon" href="/favicon.ico" type="image/x-icon"/>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:wght@400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet"/>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  font-family: 'Inter', sans-serif;
+  background: #c9cdd4;
+  min-height: 100vh;
+  color: #1a1a1a;
+}
+
+/* ── TOOLBAR ── */
+#toolbar {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  background: #1c2b3a;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 9px 24px;
+  box-shadow: 0 2px 10px rgba(0,0,0,.4);
+  flex-wrap: wrap; gap: 6px;
+}
+#toolbar .brand { color: rgba(255,255,255,.7); font-size: 13px; font-weight: 500; display: flex; align-items: center; gap: 12px; }
+#toolbar .brand strong { color: #fff; }
+#toolbar .brand a {
+  color: rgba(255,255,255,.5); font-size: 11.5px; text-decoration: none;
+  border: 1px solid rgba(255,255,255,.15); padding: 3px 10px; border-radius: 4px;
+  transition: all .15s;
+}
+#toolbar .brand a:hover { color: #fff; border-color: rgba(255,255,255,.35); }
+.tb-status {
+  font-size: 11px; font-weight: 500; margin-left: 8px;
+}
+.tb-status.saved { color: #68d391; }
+.tb-status.saving { color: #f6e05e; }
+.tb-status.unsaved { color: #fc8181; }
+#toolbar .actions { display: flex; gap: 6px; flex-wrap: wrap; }
+.tbtn {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 14px; border-radius: 4px;
+  font-size: 12.5px; font-weight: 600; cursor: pointer;
+  border: none; font-family: 'Inter', sans-serif; transition: all .15s;
+  white-space: nowrap;
+}
+.tbtn svg { width: 14px; height: 14px; flex-shrink: 0; }
+.tbtn-ghost { background: rgba(255,255,255,.1); color: #fff; }
+.tbtn-ghost:hover { background: rgba(255,255,255,.2); }
+.tbtn-accent { background: #00C9A7; color: #0A2540; font-weight: 700; }
+.tbtn-accent:hover { background: #00b396; }
+.tbtn-primary { background: #2563a8; color: #fff; }
+.tbtn-primary:hover { background: #3074be; }
+
+/* ── SHARE MODAL ── */
+.share-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,.5);
+  align-items: center; justify-content: center;
+}
+.share-backdrop.open { display: flex; }
+.share-box {
+  background: #fff; border-radius: 12px; padding: 28px;
+  max-width: 480px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,.2);
+}
+.share-box h3 { font-size: 18px; font-weight: 700; color: #1c2b3a; margin-bottom: 8px; }
+.share-box p { font-size: 13px; color: #555; margin-bottom: 16px; line-height: 1.5; }
+.share-url-row { display: flex; gap: 8px; }
+.share-url-row input {
+  flex: 1; padding: 10px 12px; border: 1.5px solid #dde6ef;
+  border-radius: 6px; font-size: 13px; color: #1a1a1a; background: #f8fafc; outline: none;
+}
+.share-url-row input:focus { border-color: #2563a8; }
+.share-copy-btn {
+  padding: 10px 18px; background: #1c2b3a; color: #fff;
+  border: none; border-radius: 6px; font-size: 12.5px; font-weight: 600;
+  cursor: pointer; transition: background .15s; white-space: nowrap;
+}
+.share-copy-btn:hover { background: #2e4055; }
+.share-close {
+  display: block; margin-top: 14px; text-align: center; font-size: 12.5px;
+  color: #888; background: none; border: none; cursor: pointer; font-weight: 500;
+}
+.share-close:hover { color: #555; }
+
+/* ── MY CVs PANEL ── */
+.mycvs-backdrop {
+  display: none; position: fixed; inset: 0; z-index: 300;
+  background: rgba(0,0,0,.45);
+}
+.mycvs-backdrop.open { display: block; }
+.mycvs-panel {
+  position: fixed; top: 0; right: -360px; bottom: 0; z-index: 310;
+  width: 340px; max-width: 90vw; background: #fff;
+  box-shadow: -4px 0 24px rgba(0,0,0,.2);
+  transition: right .25s ease;
+  display: flex; flex-direction: column;
+  font-family: 'Inter', sans-serif;
+}
+.mycvs-panel.open { right: 0; }
+.mycvs-head {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 16px 20px; border-bottom: 1px solid #e8ecf0;
+}
+.mycvs-head h3 { font-size: 16px; font-weight: 700; color: #1c2b3a; margin: 0; }
+.mycvs-close-btn {
+  background: none; border: none; cursor: pointer; color: #888;
+  font-size: 20px; line-height: 1; padding: 4px; transition: color .15s;
+}
+.mycvs-close-btn:hover { color: #333; }
+.mycvs-body { flex: 1; overflow-y: auto; padding: 12px 20px; }
+.mycvs-empty {
+  text-align: center; padding: 40px 16px; color: #888; font-size: 13px; line-height: 1.6;
+}
+.mycvs-item {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 12px 14px; border-radius: 8px; margin-bottom: 8px;
+  border: 1.5px solid #e8ecf0; transition: border-color .15s, background .15s;
+  cursor: pointer;
+}
+.mycvs-item:hover { border-color: #2e75b6; background: #f0f6fc; }
+.mycvs-item.active { border-color: #2e75b6; background: #e8f2fc; }
+.mycvs-item-info { flex: 1; min-width: 0; }
+.mycvs-item-name {
+  font-size: 13.5px; font-weight: 600; color: #1c2b3a;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.mycvs-item-date { font-size: 11px; color: #888; margin-top: 2px; }
+.mycvs-item-actions { display: flex; gap: 6px; flex-shrink: 0; margin-left: 10px; }
+.mycvs-item-btn {
+  background: none; border: none; cursor: pointer; font-size: 11px;
+  font-weight: 600; padding: 4px 8px; border-radius: 4px; transition: all .15s;
+  font-family: inherit;
+}
+.mycvs-item-btn.open-btn { color: #2563a8; }
+.mycvs-item-btn.open-btn:hover { background: #e8f2fc; }
+.mycvs-item-btn.del-btn { color: #b91c1c; }
+.mycvs-item-btn.del-btn:hover { background: #fef2f2; }
+
+/* ── ZOOM CONTROLS (middle section in toolbar) ── */
+.zoom-controls {
+  display: flex; align-items: center; gap: 8px;
+}
+.zoom-btn {
+  width: 30px; height: 30px; border-radius: 50%;
+  border: 1.5px solid rgba(255,255,255,.35); background: transparent;
+  color: #fff; cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: all .15s; padding: 0;
+}
+.zoom-btn:hover { border-color: rgba(255,255,255,.7); background: rgba(255,255,255,.1); }
+.zoom-btn svg { width: 16px; height: 16px; }
+.zoom-label {
+  font-size: 11px; font-weight: 600; color: rgba(255,255,255,.7);
+  min-width: 38px; text-align: center; user-select: none;
+}
+.zoom-btn-fit {
+  font-size: 9.5px; font-weight: 700; color: rgba(255,255,255,.6);
+  border: 1.5px solid rgba(255,255,255,.25); background: transparent;
+  padding: 4px 10px; border-radius: 12px; cursor: pointer;
+  transition: all .15s; font-family: 'Inter', sans-serif; white-space: nowrap;
+}
+.zoom-btn-fit:hover { color: #fff; border-color: rgba(255,255,255,.5); background: rgba(255,255,255,.1); }
+
+/* ── PAGE OUTER ── */
+#page-outer {
+  padding: 64px 0 60px;
+  display: flex; justify-content: center; align-items: flex-start;
+  min-height: 100vh;
+  overflow: auto;
+}
+
+/* ── ZOOM WRAPPER ── */
+#cv-zoom-wrapper {
+  transform-origin: top center;
+  transition: transform .15s ease;
+}
+
+/* ── A4 CV SHEET (794 x 1123px = 210mm x 297mm at 96dpi) ── */
+#cv {
+  width: 794px;
+  min-height: 1123px;
+  background: #fff;
+  box-shadow: 0 6px 40px rgba(0,0,0,.28);
+  position: relative;
+}
+
+/* ── EDITABLES ── */
+[contenteditable] { outline: none; }
+[contenteditable]:hover:not(:focus) { background: rgba(37,99,168,.05); border-radius: 2px; }
+[contenteditable]:focus { background: rgba(37,99,168,.09); border-radius: 2px; box-shadow: inset 0 -1px 0 #2563a8; }
+
+/* ── HEADER (dark info block floating on sky background) ── */
+#cv-header {
+  display: flex; background: #1c2b3a; min-height: 170px;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0,0,0,.25);
+}
+#header-left {
+  flex: 1; padding: 24px 26px 20px; position: relative;
+}
+#header-left::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0;
+  width: 4px; background: #2e75b6;
+  border-radius: 4px 0 0 4px;
+}
+#cv-name {
+  font-family: 'EB Garamond', serif;
+  font-size: 30px; font-weight: 700; color: #fff;
+  letter-spacing: .02em; line-height: 1.1; margin-bottom: 18px;
+}
+
+/* personal info grid */
+#personal-info { display: grid; grid-template-columns: 1fr 1fr; gap: 5px 24px; }
+.info-row { display: flex; align-items: baseline; gap: 8px; }
+.info-lbl {
+  font-size: 9.5px; font-weight: 600; letter-spacing: .1em;
+  text-transform: uppercase; color: #7fa8c9;
+  white-space: nowrap; min-width: 82px; flex-shrink: 0;
+}
+.info-val { font-size: 12.5px; color: #cde0ef; font-weight: 400; flex: 1; min-width: 20px; }
+.info-full { grid-column: 1 / -1; }
+
+/* photo */
+#photo-block {
+  width: 148px; flex-shrink: 0; background: #243547;
+  position: relative; cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  overflow: hidden; border-left: 1px solid #2e4055;
+}
+#photo-img { width: 100%; height: 100%; object-fit: cover; display: none; }
+#photo-placeholder {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 8px; padding: 16px; text-align: center; color: #4a7a9b;
+}
+#photo-placeholder svg { opacity: .45; }
+#photo-placeholder span { font-size: 10.5px; font-weight: 500; color: #4a7a9b; line-height: 1.4; }
+#photo-overlay {
+  position: absolute; inset: 0; background: rgba(28,43,58,.7);
+  display: none; align-items: center; justify-content: center;
+  flex-direction: column; gap: 5px;
+  color: #fff; font-size: 11px; font-weight: 600; text-align: center;
+}
+#photo-block:hover #photo-overlay { display: flex; }
+#photo-input { display: none; }
+
+/* ── BODY ── */
+#cv-body { padding: 22px 30px 40px; font-size: 13px; line-height: 1.6; }
+
+/* ── SECTIONS ── */
+.cv-section { margin-bottom: 16px; }
+.sec-header {
+  display: flex; align-items: center;
+  margin-bottom: 8px; padding-bottom: 4px;
+  border-bottom: 1.5px solid #2e75b6;
+}
+.sec-dot { width: 6px; height: 6px; border-radius: 50%; background: #2e75b6; margin-right: 8px; flex-shrink: 0; }
+.sec-title {
+  font-family: 'EB Garamond', serif;
+  font-size: 16px; font-weight: 700; color: #1c2b3a;
+  letter-spacing: .04em; text-transform: uppercase;
+}
+
+/* objective */
+#obj-text { font-size: 13px; line-height: 1.65; color: #333; }
+
+/* ── EDUCATION ── */
+#education-wrapper { display: flex; flex-direction: column; gap: 12px; }
+.edu-stage { position: relative; padding-left: 14px; border-left: 2px solid #a3c4e0; margin-bottom: 10px; }
+.edu-stage:last-child { margin-bottom: 0; }
+.edu-stage-title {
+  font-size: 10px; font-weight: 700; letter-spacing: .1em;
+  text-transform: uppercase; color: #2e75b6;
+  margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between;
+}
+.stage-remove-btn {
+  font-size: 10px; color: #aaa; cursor: pointer;
+  border: none; background: none; font-family: inherit; font-weight: 600; transition: color .15s;
+}
+.stage-remove-btn:hover { color: #c0392b; }
+.edu-entry { margin-bottom: 8px; }
+.edu-entry:last-child { margin-bottom: 0; }
+.edu-line1 { display: flex; align-items: baseline; gap: 6px; font-size: 12px; }
+.edu-date-range {
+  color: #555; font-weight: 500; white-space: nowrap;
+  display: flex; align-items: baseline; gap: 0; flex-shrink: 0;
+}
+.edu-dash { color: #555; font-size: 12px; font-weight: 700; padding: 0 2px; }
+.edu-school { font-weight: 700; color: #1a1a1a; font-size: 13px; flex: 1; }
+.edu-cert { font-size: 12px; color: #555; font-style: italic; margin-top: 1px; display: block; }
+
+/* achievements */
+.edu-achievements { margin-top: 10px; }
+.ach-heading { font-size: 9.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: #666; margin-bottom: 4px; }
+.ach-list { list-style: none; padding: 0 0 0 10px; margin: 0; display: grid; grid-template-columns: 1fr 1fr; gap: 2px 16px; }
+.ach-list li { display: flex; align-items: flex-start; gap: 7px; font-size: 12px; color: #333; padding: 1px 0; }
+.ach-list li::before { content: '\2013'; color: #2e75b6; font-weight: 700; flex-shrink: 0; }
+.ach-text { flex: 1; outline: none; }
+.ach-text:hover { background: rgba(37,99,168,.06); border-radius: 2px; }
+.ach-text:focus { background: rgba(37,99,168,.09); border-radius: 2px; box-shadow: inset 0 -1px 0 #2e75b6; }
+.ach-del {
+  font-size: 12px; color: #ccc; cursor: pointer; line-height: 1.5;
+  flex-shrink: 0; transition: color .12s; border: none; background: none; font-family: inherit;
+}
+.ach-del:hover { color: #c0392b; }
+
+/* action links */
+.edu-actions { display: flex; gap: 8px; margin-top: 4px; flex-wrap: wrap; }
+.edu-link-btn {
+  font-size: 10.5px; color: #2563a8; background: none; border: none;
+  cursor: pointer; font-family: inherit; font-weight: 600;
+  padding: 0; text-decoration: underline; text-underline-offset: 2px; transition: color .12s;
+}
+.edu-link-btn:hover { color: #1a4f8a; }
+.edu-link-btn.danger { color: #b91c1c; text-decoration: none; font-weight: 500; }
+.edu-link-btn.danger:hover { color: #991b1b; }
+
+/* add stage bar */
+#add-stage-bar { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 2px; }
+.add-stage-btn {
+  font-size: 10.5px; color: #2563a8; background: none; border: none;
+  cursor: pointer; font-family: inherit; font-weight: 600;
+  padding: 0; text-decoration: underline; text-underline-offset: 2px;
+}
+.add-stage-btn:hover { color: #1a4f8a; }
+
+/* ── REFERENCES ── */
+#ref-list { display: grid; grid-template-columns: 1fr 1fr; gap: 10px 20px; }
+.referee-card { padding: 8px 10px; border-left: 2px solid #2e75b6; }
+.referee-name    { font-size: 13px; font-weight: 700; color: #1a1a1a; display: block; }
+.referee-title   { font-size: 12px; color: #444; display: block; margin-top: 1px; }
+.referee-org     { font-size: 12px; color: #444; font-style: italic; display: block; }
+.referee-contact { font-size: 11.5px; color: #666; display: block; margin-top: 3px; }
+
+/* ── SCREEN ONLY ── */
+.screen-only { }
+@media print { .screen-only { display: none !important; } }
+
+/* ── PAGE LIMIT LINE ── */
+#page-limit-line {
+  display: none; position: absolute;
+  left: 0; right: 0; top: 1123px; height: 0;
+  border-top: 2px dashed #e53e3e; z-index: 10; pointer-events: none;
+}
+#page-limit-line::after {
+  content: '\2014 Page 1 ends here \2014';
+  position: absolute; right: 8px; top: -18px;
+  font-size: 9.5px; font-weight: 700; color: #e53e3e;
+  font-family: 'Inter', sans-serif; letter-spacing: .04em; text-transform: uppercase;
+  background: #fff; padding: 0 4px;
+}
+
+/* ── OVERFLOW WARNING ── */
+#overflow-warning {
+  display: none; position: fixed; bottom: 0; left: 0; right: 0; z-index: 400;
+  background: #c53030; color: #fff; font-family: 'Inter', sans-serif;
+  font-size: 12.5px; font-weight: 500; padding: 10px 24px; text-align: center;
+  box-shadow: 0 -3px 16px rgba(0,0,0,.25);
+}
+#overflow-warning strong { font-weight: 700; }
+#overflow-warning .ow-tip { display: block; font-size: 11px; margin-top: 2px; opacity: .88; }
+
+/* ── TOAST ── */
+#toast {
+  position: fixed; bottom: 24px; right: 24px; z-index: 300;
+  background: #1c2b3a; color: #fff; padding: 10px 20px;
+  border-radius: 6px; font-size: 12.5px; font-weight: 600;
+  box-shadow: 0 4px 18px rgba(0,0,0,.25);
+  transform: translateY(60px); opacity: 0;
+  transition: all .28s cubic-bezier(.34,1.56,.64,1);
+  pointer-events: none; font-family: 'Inter', sans-serif;
+}
+#toast.show { transform: translateY(0); opacity: 1; }
+
+/* ── HEADER BACKGROUND (sky image behind the dark info section) ── */
+#cv-header-bg {
+  background: url('/assets/cv-header-bg.webp') center / cover no-repeat;
+  background-color: #b8d4ed;
+  padding: 14px 16px 12px;
+}
+#cv-header-bg .doc-label {
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 4px 8px;
+}
+#cv-header-bg .doc-title {
+  font-family: 'EB Garamond', serif;
+  font-size: 10px; font-weight: 700; letter-spacing: .14em;
+  text-transform: uppercase; color: #1c2b3a;
+  text-shadow: 0 1px 2px rgba(255,255,255,.6);
+}
+#cv-header-bg .doc-date {
+  font-size: 8.5px; color: #2e5580; font-weight: 500;
+  text-shadow: 0 1px 2px rgba(255,255,255,.6);
+}
+
+/* ── DOCUMENT FOOTER (light blue bar image — pinned to bottom of A4) ── */
+#doc-footer {
+  background: url('/assets/cv-footer-bg.webp') center / cover no-repeat;
+  background-color: #95bede;
+  height: 28px;
+  position: absolute; bottom: 0; left: 0; right: 0;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+/* ── PRINT ── */
+/* @page — Chrome, Edge, Opera, Safari 13.1+, Firefox 19+ */
+@page {
+  size: A4;
+  size: 210mm 297mm; /* fallback for browsers that don't understand 'A4' keyword */
+  margin: 0;
+}
+@media print {
+  /* Force ALL backgrounds, borders, and colors to print exactly as on screen.
+     -webkit- : Chrome, Safari, Edge (Blink), old Android Browser
+     -moz-    : Firefox (ignored if unsupported, no harm)
+     standard : modern spec */
+  *, *::before, *::after {
+    -webkit-print-color-adjust: exact !important;
+    -moz-print-color-adjust: exact !important;
+    color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    -webkit-transition: none !important;
+    -moz-transition: none !important;
+    -o-transition: none !important;
+    transition: none !important;
+    -webkit-animation: none !important;
+    -moz-animation: none !important;
+    -o-animation: none !important;
+    animation: none !important;
+  }
+
+  html, body {
+    background: white !important; background-color: white !important;
+    margin: 0 !important; padding: 0 !important;
+    width: 210mm !important; height: 297mm !important;
+    -webkit-text-size-adjust: 100% !important;
+    -ms-text-size-adjust: 100% !important;
+  }
+
+  /* Hide all UI chrome */
+  #toolbar, #overflow-warning, #page-limit-line,
+  .share-backdrop, .mycvs-backdrop, .mycvs-panel,
+  #toast, #photo-overlay, #photo-placeholder,
+  .screen-only {
+    display: none !important;
+    visibility: hidden !important;
+    height: 0 !important; width: 0 !important;
+    overflow: hidden !important;
+  }
+
+  /* Layout reset */
+  #page-outer {
+    padding: 0 !important; background: white !important; background-color: white !important;
+    display: block !important; float: none !important;
+  }
+  #cv-zoom-wrapper {
+    -webkit-transform: none !important; -ms-transform: none !important; transform: none !important;
+    width: auto !important; height: auto !important; margin: 0 !important;
+  }
+
+  /* A4 sheet — exact one-page container, footer anchors to its bottom */
+  #cv {
+    width: 210mm !important; height: 297mm !important;
+    -webkit-box-shadow: none !important; -moz-box-shadow: none !important; box-shadow: none !important;
+    margin: 0 !important; overflow: hidden !important;
+    position: relative !important;
+  }
+
+  /* Footer — absolute inside the fixed-height #cv, sits at bottom of A4 */
+  #doc-footer {
+    position: absolute !important; bottom: 0 !important; left: 0 !important; right: 0 !important;
+    height: 28px !important; display: block !important;
+    background: #87bef4 !important; background-color: #87bef4 !important;
+    background-image: none !important;
+  }
+
+  /* Photo — show image if loaded */
+  #photo-img[src]:not([src=""]) { display: block !important; }
+  #photo-img { page-break-inside: avoid; break-inside: avoid; }
+
+  /* Clean contenteditable appearance */
+  [contenteditable] { cursor: default !important; }
+  [contenteditable]:hover, [contenteditable]:focus {
+    background: transparent !important; background-color: transparent !important;
+    -webkit-box-shadow: none !important; -moz-box-shadow: none !important; box-shadow: none !important;
+    outline: none !important;
+  }
+
+  /* Prevent awkward breaks — legacy + modern syntax */
+  .cv-section, .edu-stage, .edu-entry, .referee-card {
+    page-break-inside: avoid;   /* legacy: IE, old Firefox, old Safari */
+    -webkit-column-break-inside: avoid; /* old Chrome/Safari */
+    break-inside: avoid;        /* modern spec */
+  }
+  p, li, .info-row { orphans: 3; widows: 3; }
+
+  /* Grid fallback for IE11/old Edge — stack to single column */
+  #personal-info, #ref-list, .ach-list {
+    display: -ms-grid !important;
+    display: grid !important;
+  }
+
+  /* Ensure links don't show href in print (some browsers append URLs) */
+  a[href]::after { content: none !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- TOOLBAR -->
+<div id="toolbar">
+  <div class="brand">
+    <div>
+      <strong>CV Builder</strong> &nbsp;&middot;&nbsp; Click any field to edit
+      <span class="tb-status" id="tb-status"></span>
+    </div>
+    <a href="/tools">All Tools</a>
+  </div>
+  <div class="zoom-controls">
+    <button type="button" class="zoom-btn" id="btn-zoom-out" title="Zoom out">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </button>
+    <span class="zoom-label" id="zoom-label">100%</span>
+    <button type="button" class="zoom-btn" id="btn-zoom-in" title="Zoom in">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+    </button>
+    <button type="button" class="zoom-btn-fit" id="btn-zoom-fit">Fit</button>
+  </div>
+  <div class="actions">
+    <button class="tbtn tbtn-ghost" id="btn-new" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+      New
+    </button>
+    <button class="tbtn tbtn-ghost" id="btn-reset" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 102.13-9.36L1 10"/></svg>
+      Reset
+    </button>
+    <button class="tbtn tbtn-accent" id="btn-save" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Save
+    </button>
+    <button class="tbtn tbtn-ghost" id="btn-share" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+      Share
+    </button>
+    <button class="tbtn tbtn-ghost" id="btn-mycvs" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>
+      My CVs
+    </button>
+    <button class="tbtn tbtn-primary" id="btn-print" type="button">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="6 9 6 2 18 2 18 9"/><path d="M6 18H4a2 2 0 01-2-2v-5a2 2 0 012-2h16a2 2 0 012 2v5a2 2 0 01-2 2h-2"/><rect x="6" y="14" width="12" height="8"/></svg>
+      Print / PDF
+    </button>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="share-backdrop" id="share-backdrop">
+  <div class="share-box">
+    <h3>Share this CV</h3>
+    <p>Anyone with this link can view and edit. Bookmark it to come back later.</p>
+    <div class="share-url-row">
+      <input type="text" id="share-url" readonly value=""/>
+      <button type="button" class="share-copy-btn" id="share-copy">Copy</button>
+    </div>
+    <button type="button" class="share-close" id="share-close">Close</button>
+  </div>
+</div>
+
+<!-- MY CVs PANEL -->
+<div class="mycvs-backdrop" id="mycvs-backdrop"></div>
+<div class="mycvs-panel" id="mycvs-panel">
+  <div class="mycvs-head">
+    <h3>My CVs</h3>
+    <button type="button" class="mycvs-close-btn" id="mycvs-close">&times;</button>
+  </div>
+  <div class="mycvs-body" id="mycvs-body"></div>
+</div>
+
+<!-- PAGE -->
+<div id="page-outer">
+<div id="cv-zoom-wrapper">
+<div id="cv">
+
+  <div id="page-limit-line"></div>
+
+  <!-- HEADER BACKGROUND (sky image) with floating info block -->
+  <div id="cv-header-bg">
+    <div class="doc-label">
+      <span class="doc-title">Curriculum Vitae</span>
+      <span class="doc-date" id="doc-date"></span>
+    </div>
+    <div id="cv-header">
+    <div id="header-left">
+      <div id="cv-name" contenteditable="true" spellcheck="false">[Your Full Name]</div>
+      <div id="personal-info">
+        <div class="info-row">
+          <span class="info-lbl">Address</span>
+          <span class="info-val" id="f-address" contenteditable="true" spellcheck="false">[Address]</span>
+        </div>
+        <div class="info-row">
+          <span class="info-lbl">Religion</span>
+          <span class="info-val" id="f-religion" contenteditable="true" spellcheck="false">[Religion]</span>
+        </div>
+        <div class="info-row">
+          <span class="info-lbl">Phone</span>
+          <span class="info-val" id="f-phone" contenteditable="true" spellcheck="false">[Phone Number]</span>
+        </div>
+        <div class="info-row">
+          <span class="info-lbl">Marital Status</span>
+          <span class="info-val" id="f-marital" contenteditable="true" spellcheck="false">[Marital Status]</span>
+        </div>
+        <div class="info-row">
+          <span class="info-lbl">Date of Birth</span>
+          <span class="info-val" id="f-dob" contenteditable="true" spellcheck="false">[DD Month YYYY]</span>
+        </div>
+        <div class="info-row">
+          <span class="info-lbl">Gender</span>
+          <span class="info-val" id="f-gender" contenteditable="true" spellcheck="false">[Gender]</span>
+        </div>
+        <div class="info-row info-full">
+          <span class="info-lbl">Email</span>
+          <span class="info-val" id="f-email" contenteditable="true" spellcheck="false">[email@example.com]</span>
+        </div>
+      </div>
+    </div>
+    <div id="photo-block" onclick="document.getElementById('photo-input').click()">
+      <div id="photo-placeholder">
+        <svg width="38" height="38" viewBox="0 0 24 24" fill="none" stroke="#4a7a9b" stroke-width="1.5">
+          <circle cx="12" cy="8" r="4"/><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7"/>
+        </svg>
+        <span>Click to<br>add photo</span>
+      </div>
+      <img id="photo-img" alt=""/>
+      <div id="photo-overlay">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="2">
+          <path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        Change Photo
+      </div>
+      <input type="file" id="photo-input" accept="image/*"/>
+    </div>
+  </div>
+  </div><!-- /cv-header-bg -->
+
+  <!-- BODY -->
+  <div id="cv-body">
+
+    <!-- OBJECTIVE -->
+    <div class="cv-section">
+      <div class="sec-header"><div class="sec-dot"></div><span class="sec-title">Objective</span></div>
+      <div id="obj-text" contenteditable="true" spellcheck="true">State your career objective here. Describe the role you are seeking and what value you bring to an employer.</div>
+    </div>
+
+    <!-- EDUCATION -->
+    <div class="cv-section">
+      <div class="sec-header"><div class="sec-dot"></div><span class="sec-title">Education</span></div>
+      <div id="education-wrapper"></div>
+      <div id="add-stage-bar" class="screen-only" style="margin-top:8px;"></div>
+    </div>
+
+    <!-- REFERENCES -->
+    <div class="cv-section">
+      <div class="sec-header"><div class="sec-dot"></div><span class="sec-title">References</span></div>
+      <div id="ref-list"></div>
+      <div class="screen-only" style="margin-top:8px;">
+        <button class="edu-link-btn" id="btn-add-referee" type="button">+ Add referee</button>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- DOCUMENT FOOTER — prints at bottom of every page -->
+  <div id="doc-footer">&nbsp;</div>
+
+</div>
+</div><!-- /cv-zoom-wrapper -->
+</div>
+
+<div id="toast"></div>
+<div id="overflow-warning">
+  <strong>Your CV is spilling onto a second page.</strong>
+  <span class="ow-tip">CVs should fit on a single A4 page. Shorten your content or reduce the number of entries.</span>
+</div>
+
+<!-- Schema.org -->
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "KEPAS CV Builder",
+  "description": "Create a professional CV for free. Save online, share via link, and download as PDF.",
+  "url": "https://kepas.co.ke/tools/cv-builder",
+  "applicationCategory": "BusinessApplication",
+  "operatingSystem": "Web browser",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "KES" },
+  "author": { "@type": "Organization", "name": "KEPAS", "url": "https://kepas.co.ke" }
+}
+</script>
+
+<script>
+(function() {
+'use strict';
+
+/* ==============================================
+   CONFIG & STATE
+============================================== */
+var API = '{{ apiBase }}';
+var A4_PX = 1123;
+var STAGES = ['tertiary', 'secondary', 'primary'];
+var STAGE_LABELS = { tertiary: 'Tertiary', secondary: 'Secondary', primary: 'Primary' };
+var DEFAULT_ACHIEVEMENTS = [
+  'Food & Beverages Production', 'Food & Beverages Theory',
+  'Customer Relationship Management', 'Kitchen Management',
+  'Front Office Operation', 'English Proficiency',
+  'Food & Beverages Sales And Services', 'Time Management',
+  'Public Speaking', 'House Keeping',
+  'Microsoft Office Suite Proficiency', 'Service-Related Italian'
+];
+
+var shareCode = {% if shareCode %}'{{ shareCode | safe }}'{% else %}null{% endif %};
+var dirty = false;
+var saving = false;
+var activeStages = [];
+var eduEntries = { tertiary: [], secondary: [], primary: [] };
+var eduCounter = 0;
+var refCounter = 0;
+var autoSaveTimer = null;
+var localSaveTimer = null;
+
+/* ==============================================
+   HELPERS
+============================================== */
+function $(id) { return document.getElementById(id); }
+
+function showToast(msg) {
+  var t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(function() { t.classList.remove('show'); }, 2600);
+}
+
+function setStatus(text, cls) {
+  var el = $('tb-status');
+  el.textContent = text;
+  el.className = 'tb-status' + (cls ? ' ' + cls : '');
+}
+
+function markDirty() {
+  if (!dirty) { dirty = true; setStatus('Unsaved changes', 'unsaved'); }
+  /* Save to localStorage every 3s (fast, local, survives refresh/deploy) */
+  if (localSaveTimer) clearTimeout(localSaveTimer);
+  localSaveTimer = setTimeout(saveToLocal, 3000);
+  /* Auto-save to server every 15s */
+  if (autoSaveTimer) clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(saveOnline, 15000);
+}
+
+function saveToLocal() {
+  try {
+    var key = 'cv_backup_' + (shareCode || 'local');
+    var payload = JSON.stringify({
+      cvData: collectData(),
+      photoData: getPhoto(),
+      savedAt: Date.now()
+    });
+    localStorage.setItem(key, payload);
+  } catch(x) {}
+}
+
+/* ==============================================
+   PHOTO
+============================================== */
+$('photo-input').addEventListener('change', function(e) {
+  var file = e.target.files[0];
+  if (!file) return;
+  if (file.size > 10 * 1024 * 1024) { showToast('Photo must be under 10 MB'); return; }
+  var reader = new FileReader();
+  reader.onload = function(ev) {
+    var img = $('photo-img');
+    img.src = ev.target.result;
+    img.style.display = 'block';
+    $('photo-placeholder').style.display = 'none';
+    markDirty();
+  };
+  reader.readAsDataURL(file);
+});
+
+/* ==============================================
+   EDUCATION — STAGES
+============================================== */
+function renderEducationWrapper() {
+  var wrapper = $('education-wrapper');
+  wrapper.innerHTML = '';
+  activeStages.forEach(function(stage) {
+    var div = document.createElement('div');
+    div.className = 'edu-stage';
+    div.id = 'stage-' + stage;
+    div.innerHTML =
+      '<div class="edu-stage-title">' + STAGE_LABELS[stage] +
+        '<button type="button" class="stage-remove-btn screen-only" data-stage="' + stage + '">Remove section</button>' +
+      '</div>' +
+      '<div id="edu-list-' + stage + '"></div>' +
+      '<div class="edu-actions screen-only" style="margin-top:6px;">' +
+        '<button type="button" class="edu-link-btn" data-add="' + stage + '">+ Add entry</button>' +
+      '</div>';
+    wrapper.appendChild(div);
+    div.querySelector('[data-stage]').onclick = function() { removeStage(stage); };
+    div.querySelector('[data-add]').onclick = function() { addEduEntry(stage); };
+  });
+  refreshAddStageBar();
+}
+
+function refreshAddStageBar() {
+  var bar = $('add-stage-bar');
+  bar.innerHTML = '';
+  var missing = STAGES.filter(function(s) { return activeStages.indexOf(s) === -1; });
+  if (!missing.length) { bar.style.display = 'none'; return; }
+  bar.style.display = 'flex';
+  missing.forEach(function(s) {
+    var btn = document.createElement('button');
+    btn.type = 'button';
+    btn.className = 'add-stage-btn';
+    btn.textContent = '+ Add ' + STAGE_LABELS[s];
+    btn.onclick = function() { addStage(s); };
+    bar.appendChild(btn);
+  });
+}
+
+function addStage(stage) {
+  if (activeStages.indexOf(stage) !== -1) return;
+  var idx = STAGES.indexOf(stage);
+  var ins = -1;
+  for (var i = 0; i < activeStages.length; i++) {
+    if (STAGES.indexOf(activeStages[i]) > idx) { ins = i; break; }
+  }
+  if (ins === -1) activeStages.push(stage);
+  else activeStages.splice(ins, 0, stage);
+  renderEducationWrapper();
+  eduEntries[stage].forEach(function(e) { renderEduEntry(stage, e); });
+  markDirty();
+}
+
+function removeStage(stage) {
+  if (!confirm('Remove the ' + STAGE_LABELS[stage] + ' section?')) return;
+  activeStages = activeStages.filter(function(s) { return s !== stage; });
+  renderEducationWrapper();
+  markDirty();
+}
+
+/* ==============================================
+   EDUCATION — ENTRIES
+============================================== */
+function addEduEntry(stage, data) {
+  data = data || {};
+  var id = ++eduCounter;
+  var isTertiary = (stage === 'tertiary');
+  var achievements = data.achievements ? data.achievements.slice()
+    : (isTertiary ? DEFAULT_ACHIEVEMENTS.slice() : []);
+
+  var entry = {
+    id: id, stage: stage,
+    startDate: data.startDate || 'Jan 2020',
+    endDate: data.endDate || 'Dec 2023',
+    school: data.school || '[Institution Name]',
+    cert: data.cert || '[Qualification / Certificate]',
+    achievements: achievements
+  };
+  eduEntries[stage].push(entry);
+  renderEduEntry(stage, entry);
+}
+
+function renderEduEntry(stage, entry) {
+  var container = $('edu-list-' + stage);
+  if (!container) return;
+  var id = entry.id;
+  var isTertiary = (stage === 'tertiary');
+
+  var div = document.createElement('div');
+  div.className = 'edu-entry';
+  div.id = 'edu-' + id;
+
+  var achHtml = '';
+  if (isTertiary) {
+    achHtml =
+      '<div class="edu-achievements">' +
+        '<div class="ach-heading screen-only">Achievements</div>' +
+        '<ul class="ach-list" id="ach-list-' + id + '"></ul>' +
+        '<div class="edu-actions screen-only" style="margin-top:3px;">' +
+          '<button type="button" class="edu-link-btn" data-addach="' + id + '">+ Add achievement</button>' +
+        '</div>' +
+      '</div>';
+  }
+
+  div.innerHTML =
+    '<div class="edu-line1">' +
+      '<div class="edu-date-range">' +
+        '<span contenteditable="true" spellcheck="false" data-field="startDate" data-id="' + id + '">' + entry.startDate + '</span>' +
+        '<span class="edu-dash">-</span>' +
+        '<span contenteditable="true" spellcheck="false" data-field="endDate" data-id="' + id + '">' + entry.endDate + '</span>' +
+      '</div>' +
+      '<span class="edu-school" contenteditable="true" spellcheck="false" data-field="school" data-id="' + id + '">' + entry.school + '</span>' +
+    '</div>' +
+    '<span class="edu-cert" contenteditable="true" spellcheck="true" data-field="cert" data-id="' + id + '">' + entry.cert + '</span>' +
+    achHtml +
+    '<div class="edu-actions screen-only" style="margin-top:4px;">' +
+      '<button type="button" class="edu-link-btn danger" data-rmentry="' + stage + ':' + id + '">Remove entry</button>' +
+    '</div>';
+
+  container.appendChild(div);
+
+  div.querySelectorAll('[data-field]').forEach(function(el) {
+    el.addEventListener('input', function() {
+      var e = eduEntries[stage].find(function(x) { return x.id === id; });
+      if (e) e[el.getAttribute('data-field')] = el.innerText.trim();
+      markDirty();
+    });
+  });
+
+  var rmBtn = div.querySelector('[data-rmentry]');
+  if (rmBtn) rmBtn.onclick = function() { removeEduEntry(stage, id); };
+
+  var addAch = div.querySelector('[data-addach]');
+  if (addAch) addAch.onclick = function() { addAchievementItem(id, '', true); };
+
+  if (isTertiary) {
+    entry.achievements.forEach(function(a) { addAchievementItem(id, a, false); });
+  }
+}
+
+function addAchievementItem(entryId, text, autoFocus) {
+  var list = $('ach-list-' + entryId);
+  if (!list) return;
+  var val = (text && text.trim) ? text.trim() : '';
+  var li = document.createElement('li');
+  li.innerHTML =
+    '<span class="ach-text" contenteditable="true" spellcheck="true">' + val + '</span>' +
+    '<button type="button" class="ach-del screen-only">&times;</button>';
+  list.appendChild(li);
+
+  li.querySelector('.ach-del').onclick = function() { li.remove(); markDirty(); };
+  li.querySelector('.ach-text').addEventListener('input', markDirty);
+
+  if (autoFocus || !val) {
+    var span = li.querySelector('.ach-text');
+    span.focus();
+    var r = document.createRange(); r.selectNodeContents(span); r.collapse(false);
+    var s = window.getSelection(); s.removeAllRanges(); s.addRange(r);
+  }
+}
+
+function removeEduEntry(stage, id) {
+  eduEntries[stage] = eduEntries[stage].filter(function(e) { return e.id !== id; });
+  var el = $('edu-' + id);
+  if (el) el.remove();
+  markDirty();
+}
+
+/* ==============================================
+   REFEREES
+============================================== */
+function addReferee(data) {
+  data = data || {};
+  var id = ++refCounter;
+  var list = $('ref-list');
+
+  var card = document.createElement('div');
+  card.className = 'referee-card';
+  card.id = 'ref-' + id;
+  card.innerHTML =
+    '<span class="referee-name" contenteditable="true" spellcheck="false">' + (data.name || '[Referee Name]') + '</span>' +
+    '<span class="referee-title" contenteditable="true" spellcheck="false">' + (data.title || '[Job Title]') + '</span>' +
+    '<span class="referee-org" contenteditable="true" spellcheck="false">' + (data.org || '[Organisation]') + '</span>' +
+    '<span class="referee-contact" contenteditable="true" spellcheck="false">' + (data.contact || '[Phone / Email]') + '</span>' +
+    '<div class="screen-only" style="margin-top:5px;">' +
+      '<button type="button" class="edu-link-btn danger" data-rmref="' + id + '">Remove</button>' +
+    '</div>';
+  list.appendChild(card);
+
+  card.querySelector('[data-rmref]').onclick = function() { removeReferee(id); };
+  card.querySelectorAll('[contenteditable]').forEach(function(el) {
+    el.addEventListener('input', markDirty);
+  });
+}
+
+function removeReferee(id) {
+  var el = $('ref-' + id);
+  if (el) el.remove();
+  markDirty();
+}
+
+$('btn-add-referee').onclick = function() { addReferee(); };
+
+function snapshotReferees() {
+  return Array.from(document.querySelectorAll('.referee-card')).map(function(card) {
+    return {
+      name:    (card.querySelector('.referee-name')    || {}).innerText || '',
+      title:   (card.querySelector('.referee-title')   || {}).innerText || '',
+      org:     (card.querySelector('.referee-org')     || {}).innerText || '',
+      contact: (card.querySelector('.referee-contact') || {}).innerText || ''
+    };
+  });
+}
+
+/* ==============================================
+   SNAPSHOT & COLLECT
+============================================== */
+function snapshotAllEdu() {
+  STAGES.forEach(function(stage) {
+    eduEntries[stage].forEach(function(entry) {
+      var div = $('edu-' + entry.id);
+      if (!div) return;
+      ['startDate','endDate','school','cert'].forEach(function(f) {
+        var el = div.querySelector('[data-field="' + f + '"]');
+        if (el) entry[f] = el.innerText.trim();
+      });
+      if (stage === 'tertiary') {
+        var list = $('ach-list-' + entry.id);
+        if (list) {
+          entry.achievements = Array.from(list.querySelectorAll('.ach-text'))
+            .map(function(el) { return el.innerText.trim(); })
+            .filter(function(v) { return v.length > 0; });
+        }
+      }
+    });
+  });
+}
+
+function collectData() {
+  snapshotAllEdu();
+  var edu = {};
+  STAGES.forEach(function(stage) {
+    edu[stage] = eduEntries[stage].map(function(e) {
+      return { startDate: e.startDate, endDate: e.endDate, school: e.school, cert: e.cert, achievements: e.achievements || [] };
+    });
+  });
+  return {
+    name: $('cv-name').innerText.trim(), address: $('f-address').innerText.trim(),
+    phone: $('f-phone').innerText.trim(), dob: $('f-dob').innerText.trim(),
+    religion: $('f-religion').innerText.trim(), marital: $('f-marital').innerText.trim(),
+    gender: $('f-gender').innerText.trim(), email: $('f-email').innerText.trim(),
+    objective: $('obj-text').innerText.trim(),
+    activeStages: activeStages.slice(), education: edu, referees: snapshotReferees()
+  };
+}
+
+function getPhoto() {
+  var img = $('photo-img');
+  return (img && img.style.display !== 'none' && img.src && img.src.indexOf('data:') === 0) ? img.src : null;
+}
+
+function populateData(d, photo) {
+  function set(id, val, fb) { $(id).innerText = val || fb; }
+  set('cv-name', d.name, '[Your Full Name]');
+  set('f-address', d.address, '[Address]');
+  set('f-phone', d.phone, '[Phone Number]');
+  set('f-dob', d.dob, '[DD Month YYYY]');
+  set('f-religion', d.religion, '[Religion]');
+  set('f-marital', d.marital, '[Marital Status]');
+  set('f-gender', d.gender, '[Gender]');
+  set('f-email', d.email, '[email@example.com]');
+  set('obj-text', d.objective, '');
+
+  activeStages = d.activeStages || ['tertiary','secondary','primary'];
+  eduEntries = { tertiary: [], secondary: [], primary: [] };
+  eduCounter = 0; refCounter = 0;
+  renderEducationWrapper();
+  activeStages.forEach(function(stage) {
+    (d.education && d.education[stage] || []).forEach(function(e) { addEduEntry(stage, e); });
+  });
+  $('ref-list').innerHTML = '';
+  (d.referees || []).forEach(function(r) { addReferee(r); });
+
+  if (photo) {
+    var img = $('photo-img');
+    img.src = photo; img.style.display = 'block';
+    $('photo-placeholder').style.display = 'none';
+  }
+  dirty = false; setStatus('');
+  if (typeof updateDocHeaderFooter === 'function') updateDocHeaderFooter();
+}
+
+/* ==============================================
+   API
+============================================== */
+function saveOnline() {
+  if (saving) return;
+  saving = true;
+  setStatus('Saving...', 'saving');
+
+  var body = JSON.stringify({ cvData: collectData(), photoData: getPhoto() });
+  var method = shareCode ? 'PUT' : 'POST';
+  var url = shareCode ? API + '/' + shareCode : API;
+
+  fetch(url, { method: method, headers: { 'Content-Type': 'application/json' }, body: body })
+    .then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(data) {
+      saving = false; dirty = false;
+      if (data.shareCode && !shareCode) {
+        shareCode = data.shareCode;
+        history.replaceState(null, '', '/tools/cv-builder/' + shareCode);
+      }
+      setStatus('Saved', 'saved');
+      showToast('Saved');
+      saveToLocal(); /* sync localStorage with the latest saved state */
+      saveToCvList(shareCode, $('cv-name').innerText.trim()); /* track in My CVs list */
+    })
+    .catch(function() {
+      saving = false;
+      setStatus('Save failed', 'unsaved');
+      showToast('Could not save online \u2014 saved locally');
+      saveToLocal();
+    });
+}
+
+function loadFromServer(code) {
+  setStatus('Loading...', 'saving');
+  fetch(API + '/' + code)
+    .then(function(r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+    .then(function(data) {
+      /* Check if localStorage has a newer version */
+      var local = getLocalBackup(code);
+      if (local && local.savedAt && data.updatedAt) {
+        var serverTime = new Date(data.updatedAt).getTime();
+        if (local.savedAt > serverTime + 5000) {
+          /* Local copy is >5s newer than server — offer to restore */
+          if (confirm('You have unsaved changes from your last session. Restore them?')) {
+            populateData(local.cvData, local.photoData);
+            setStatus('Restored from local backup', 'saved');
+            markDirty(); /* trigger server save of the restored data */
+            return;
+          }
+        }
+      }
+      populateData(data.cvData, data.photoData);
+      setStatus('Loaded', 'saved');
+      saveToCvList(code, (data.cvData && data.cvData.name) || '');
+      setTimeout(function() { if (!dirty) setStatus(''); }, 2000);
+    })
+    .catch(function() {
+      /* Server failed — try localStorage backup */
+      var local = getLocalBackup(code);
+      if (local && local.cvData) {
+        populateData(local.cvData, local.photoData);
+        showToast('Loaded from local backup');
+        setStatus('Offline backup', 'unsaved');
+        return;
+      }
+      showToast('CV not found \u2014 starting blank');
+      initDefaults(); setStatus('');
+    });
+}
+
+function getLocalBackup(code) {
+  try {
+    var key = 'cv_backup_' + (code || 'local');
+    var raw = localStorage.getItem(key);
+    if (!raw) return null;
+    return JSON.parse(raw);
+  } catch(x) { return null; }
+}
+
+function tryRestoreLocal() {
+  var local = getLocalBackup('local');
+  if (!local || !local.cvData || !local.savedAt) return false;
+  /* Only offer restore if the backup is less than 7 days old */
+  var age = Date.now() - local.savedAt;
+  if (age > 7 * 24 * 60 * 60 * 1000) return false;
+  if (confirm('You have an unsaved CV from your last session. Restore it?')) {
+    populateData(local.cvData, local.photoData);
+    setStatus('Restored', 'unsaved');
+    markDirty();
+    return true;
+  }
+  return false;
+}
+
+/* ==============================================
+   DEFAULTS
+============================================== */
+function initDefaults() {
+  activeStages = ['tertiary','secondary','primary'];
+  eduEntries = { tertiary: [], secondary: [], primary: [] };
+  eduCounter = 0; refCounter = 0;
+  renderEducationWrapper();
+  addEduEntry('tertiary',  { startDate:'Jan 2020', endDate:'Dec 2023', school:'ADEA-PMD ROMBO Vocational Training Center', cert:'[Degree / Diploma / Certificate]' });
+  addEduEntry('secondary', { startDate:'Jan 2015', endDate:'Nov 2019', school:'[Secondary School Name]', cert:'[Certificate, e.g. KCSE]', achievements:[] });
+  addEduEntry('primary',   { startDate:'Jan 2007', endDate:'Nov 2014', school:'[Primary School Name]', cert:'[Certificate, e.g. KCPE]', achievements:[] });
+  addReferee(); addReferee(); addReferee();
+  dirty = false;
+}
+
+/* ==============================================
+   TOOLBAR ACTIONS
+============================================== */
+$('btn-save').onclick = saveOnline;
+$('btn-print').onclick = function() { window.print(); };
+
+$('btn-reset').onclick = function() {
+  if (!confirm('Reset all content to defaults?')) return;
+  $('photo-img').style.display = 'none'; $('photo-img').src = '';
+  $('photo-placeholder').style.display = '';
+  $('ref-list').innerHTML = '';
+  initDefaults();
+  showToast('Reset');
+};
+
+$('btn-new').onclick = function() {
+  if (dirty && !confirm('You have unsaved changes. Start a new CV?')) return;
+  /* Clear old local backup so it doesn't auto-restore later */
+  try { localStorage.removeItem('cv_backup_' + (shareCode || 'local')); } catch(x) {}
+  shareCode = null;
+  history.replaceState(null, '', '/tools/cv-builder');
+  $('photo-img').style.display = 'none'; $('photo-img').src = '';
+  $('photo-placeholder').style.display = '';
+  $('ref-list').innerHTML = '';
+  initDefaults();
+  setStatus('');
+  showToast('New CV');
+};
+
+$('btn-share').onclick = function() {
+  if (!shareCode) {
+    saveOnline();
+    var wait = setInterval(function() {
+      if (!saving && shareCode) { clearInterval(wait); openShare(); }
+      else if (!saving) { clearInterval(wait); showToast('Save failed'); }
+    }, 200);
+    return;
+  }
+  openShare();
+};
+
+function openShare() {
+  $('share-url').value = location.origin + '/tools/cv-builder/' + shareCode;
+  $('share-backdrop').classList.add('open');
+}
+
+$('share-close').onclick = function() { $('share-backdrop').classList.remove('open'); };
+$('share-backdrop').onclick = function(e) { if (e.target === $('share-backdrop')) $('share-backdrop').classList.remove('open'); };
+$('share-copy').onclick = function() {
+  var input = $('share-url'); input.select();
+  if (navigator.clipboard) navigator.clipboard.writeText(input.value).then(function() { showToast('Link copied'); });
+  else { document.execCommand('copy'); showToast('Link copied'); }
+};
+
+/* ==============================================
+   MY CVs — localStorage registry of saved CVs
+============================================== */
+var CV_LIST_KEY = 'cv_list';
+
+function getCvList() {
+  try {
+    var raw = localStorage.getItem(CV_LIST_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch(x) { return []; }
+}
+
+function saveToCvList(code, name) {
+  if (!code) return;
+  var list = getCvList();
+  var idx = list.findIndex(function(c) { return c.shareCode === code; });
+  var entry = {
+    shareCode: code,
+    name: (name && name !== '[Your Full Name]') ? name : 'Untitled CV',
+    updatedAt: new Date().toISOString()
+  };
+  if (idx >= 0) list[idx] = entry;
+  else list.unshift(entry);
+  /* Keep max 50 entries */
+  if (list.length > 50) list = list.slice(0, 50);
+  try { localStorage.setItem(CV_LIST_KEY, JSON.stringify(list)); } catch(x) {}
+}
+
+function removeFromCvList(code) {
+  var list = getCvList().filter(function(c) { return c.shareCode !== code; });
+  try { localStorage.setItem(CV_LIST_KEY, JSON.stringify(list)); } catch(x) {}
+}
+
+function renderMyCvs() {
+  var body = $('mycvs-body');
+  var list = getCvList();
+  if (!list.length) {
+    body.innerHTML = '<div class="mycvs-empty">No saved CVs yet.<br>Click <strong>Save</strong> to keep your CV online.</div>';
+    return;
+  }
+  body.innerHTML = '';
+  list.forEach(function(cv) {
+    var isActive = (shareCode === cv.shareCode);
+    var item = document.createElement('div');
+    item.className = 'mycvs-item' + (isActive ? ' active' : '');
+
+    var date = '';
+    try {
+      var d = new Date(cv.updatedAt);
+      date = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
+    } catch(x) {}
+
+    item.innerHTML =
+      '<div class="mycvs-item-info">' +
+        '<div class="mycvs-item-name">' + escapeHtml(cv.name) + '</div>' +
+        '<div class="mycvs-item-date">' + (isActive ? 'Currently editing' : date) + '</div>' +
+      '</div>' +
+      '<div class="mycvs-item-actions">' +
+        (isActive ? '' : '<button type="button" class="mycvs-item-btn open-btn" data-open="' + cv.shareCode + '">Open</button>') +
+        '<button type="button" class="mycvs-item-btn del-btn" data-del="' + cv.shareCode + '">Remove</button>' +
+      '</div>';
+
+    body.appendChild(item);
+
+    var openBtn = item.querySelector('[data-open]');
+    if (openBtn) openBtn.onclick = function(e) {
+      e.stopPropagation();
+      closeMyCvs();
+      window.location.href = '/tools/cv-builder/' + cv.shareCode;
+    };
+
+    var delBtn = item.querySelector('[data-del]');
+    delBtn.onclick = function(e) {
+      e.stopPropagation();
+      if (!confirm('Remove "' + cv.name + '" from your list? (The CV will still be accessible via its link.)')) return;
+      removeFromCvList(cv.shareCode);
+      renderMyCvs();
+    };
+
+    /* Clicking the row also opens it */
+    if (!isActive) {
+      item.style.cursor = 'pointer';
+      item.onclick = function() {
+        closeMyCvs();
+        window.location.href = '/tools/cv-builder/' + cv.shareCode;
+      };
+    }
+  });
+}
+
+function openMyCvs() {
+  renderMyCvs();
+  $('mycvs-backdrop').classList.add('open');
+  $('mycvs-panel').classList.add('open');
+}
+
+function closeMyCvs() {
+  $('mycvs-backdrop').classList.remove('open');
+  $('mycvs-panel').classList.remove('open');
+}
+
+$('btn-mycvs').onclick = openMyCvs;
+$('mycvs-close').onclick = closeMyCvs;
+$('mycvs-backdrop').onclick = closeMyCvs;
+
+function escapeHtml(str) {
+  var div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+/* ==============================================
+   ZOOM CONTROLS
+============================================== */
+var ZOOM_MIN = 0.4;
+var ZOOM_MAX = 1.5;
+var ZOOM_STEP = 0.1;
+var currentZoom = 1;
+var CV_W = 794;
+var CV_H = 1123;
+
+function applyZoom(z) {
+  z = Math.max(ZOOM_MIN, Math.min(ZOOM_MAX, z));
+  currentZoom = Math.round(z * 100) / 100;
+  var wrapper = $('cv-zoom-wrapper');
+  wrapper.style.transform = 'scale(' + currentZoom + ')';
+  /* Adjust wrapper dimensions so the outer container scrolls correctly */
+  wrapper.style.width = CV_W + 'px';
+  wrapper.style.height = Math.ceil(Math.max(CV_H, $('cv').scrollHeight) * currentZoom) + 'px';
+  wrapper.style.marginBottom = currentZoom < 1 ? '-' + Math.ceil(Math.max(CV_H, $('cv').scrollHeight) * (1 - currentZoom)) + 'px' : '0';
+  $('zoom-label').textContent = Math.round(currentZoom * 100) + '%';
+  try { localStorage.setItem('cv_zoom', currentZoom); } catch(x) {}
+}
+
+function zoomFit() {
+  var toolbarH = $('toolbar').offsetHeight || 48;
+  var available = window.innerHeight - toolbarH - 32; /* 32px breathing room */
+  var fit = available / CV_H;
+  applyZoom(fit);
+}
+
+$('btn-zoom-in').onclick = function() { applyZoom(currentZoom + ZOOM_STEP); };
+$('btn-zoom-out').onclick = function() { applyZoom(currentZoom - ZOOM_STEP); };
+$('btn-zoom-fit').onclick = zoomFit;
+
+/* Restore last zoom level */
+try {
+  var savedZoom = parseFloat(localStorage.getItem('cv_zoom'));
+  if (savedZoom && savedZoom >= ZOOM_MIN && savedZoom <= ZOOM_MAX) currentZoom = savedZoom;
+} catch(x) {}
+
+/* ==============================================
+   OVERFLOW & CHANGE TRACKING
+============================================== */
+function checkOverflow() {
+  var cv = $('cv');
+  /* Subtract height of .screen-only elements — they are display:none in print */
+  var screenOnlyH = 0;
+  var els = cv.querySelectorAll('.screen-only');
+  for (var i = 0; i < els.length; i++) {
+    var s = window.getComputedStyle(els[i]);
+    screenOnlyH += els[i].offsetHeight + parseFloat(s.marginTop) + parseFloat(s.marginBottom);
+  }
+  var printH = cv.scrollHeight - screenOnlyH;
+  var over = printH > A4_PX;
+  $('overflow-warning').style.display = over ? 'block' : 'none';
+  $('page-limit-line').style.display = over ? 'block' : 'none';
+}
+
+$('cv').addEventListener('input', function() { markDirty(); checkOverflow(); });
+
+window.addEventListener('beforeunload', function() {
+  if (dirty) {
+    /* Always save to localStorage on exit */
+    saveToLocal();
+    /* Also try server save if we have a share code */
+    if (shareCode) {
+      navigator.sendBeacon(API + '/' + shareCode, new Blob(
+        [JSON.stringify({ cvData: collectData(), photoData: getPhoto() })],
+        { type: 'application/json' }
+      ));
+    }
+  }
+});
+
+/* ==============================================
+   INIT
+============================================== */
+/* -- Keep doc header date synced -- */
+function updateDocHeaderFooter() {
+  var d = new Date();
+  var months = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+  $('doc-date').textContent = months[d.getMonth()] + ' ' + d.getFullYear();
+}
+$('cv-name').addEventListener('input', updateDocHeaderFooter);
+
+if (shareCode) loadFromServer(shareCode);
+else if (!tryRestoreLocal()) initDefaults();
+
+updateDocHeaderFooter();
+
+var obs = new MutationObserver(checkOverflow);
+obs.observe($('cv'), { childList: true, subtree: true, characterData: true });
+$('photo-img').addEventListener('load', checkOverflow);
+setTimeout(checkOverflow, 400);
+
+/* Apply zoom — fit-to-screen on first visit, restore saved zoom on return */
+setTimeout(function() {
+  if (currentZoom !== 1) applyZoom(currentZoom);
+  else zoomFit();
+}, 100);
+
+})();
+</script>
+</body>
+</html>
